@@ -20,11 +20,11 @@ OPTIONS:
         -q|--queue <queue>
                queue for batch submisson
         -O|--opal
-               make pedestals for Opals (default only cspad/EPIX detectors)
+               accepted for compatibility; not used by LCLS-II processing
         -Z|--zyla
-               make pedestals for Zyla (default only cspad/EPIX detectors)
+               accepted for compatibility; not used by LCLS-II processing
         -A|--alvium
-               make pedestals for Alvium (default only cspad/EPIX detectors)
+               accepted for compatibility; not used by LCLS-II processing
         --reservation <reservation>
                reservation for batch submisson
         -v|--validity_start <val_run>
@@ -119,12 +119,12 @@ check_completed_jobs()
     for JOBID in "${ALLJOBIDS[@]}"; do
 	JOBSTATE=$(sacct -j "$JOBID" -X -o State | tail -n 1)
 	if [[ $JOBSTATE =~ "COMPLETED" ]]; then
-	    echo $JOBID $JOBSTATE
+	    echo "$JOBID" "$JOBSTATE"
 	else
 	    NFAILEDJOBS=$((NFAILEDJOBS+1))
 	    JOBEXITCODE=$(sacct -j "$JOBID" -X -o ExitCode | tail -n 1)
 	    JOBCMD=$(sacct -j "$JOBID" -X -o Submitline%500 | tail -n 1 | sed 's/  //g')
-	    echo $JOBID reported $JOBSTATE and failed with error code $JOBEXITCODE command was $JOBCMD
+	    echo "$JOBID reported $JOBSTATE and failed with error code $JOBEXITCODE command was $JOBCMD"
 	fi
     done
 }
@@ -132,11 +132,13 @@ check_completed_jobs()
 get_datinfo()
 {
     echo DATINFO_DEBUG
-    datinfo -d $MYDET -k exp=$EXP,run=$RUN,dir=$XTCDIR -L CRITICAL -t DRS > /tmp/datinfo_"$MYDET"_"$EXP"_"$CREATE_TIME"
+    datinfo -d "$MYDET" -k exp="$EXP",run="$RUN",dir="$XTCDIR" -L CRITICAL -t DRS > /tmp/datinfo_"$MYDET"_"$EXP"_"$CREATE_TIME"
 }
 
 # Arg: DETECTOR class. This could be a comma-separated list, but we're
 # matching it in the config file as a string.
+# Retain the legacy configuration hook for compatibility.
+# shellcheck disable=SC2034
 get_config()
 {
     awk 'BEGIN{n=0;}/'"$1"' \{/{n=1;next;}/\}/{n=0;next;}{if(n)print;}' <"$CFGFILE" >/tmp/script.$$
@@ -169,14 +171,20 @@ do
             exit
             ;;
         -A|--alvium)
+            # Accepted for compatibility; LCLS-II processing does not use this flag yet.
+            # shellcheck disable=SC2034
             WANT_ALVIUM=1
             shift
             ;;
         -Z|--zyla)
+            # Accepted for compatibility; LCLS-II processing does not use this flag yet.
+            # shellcheck disable=SC2034
             WANT_ZYLA=1
             shift
             ;;
         -O|--opal)
+            # Accepted for compatibility; LCLS-II processing does not use this flag yet.
+            # shellcheck disable=SC2034
             WANT_OPAL=1
             shift
             ;;
@@ -292,7 +300,7 @@ MYADUMAX=${MYADUMAX:=-1}
 #check for a valid kerberos token, otherwise the deploy step will not work!
 if ! klist -s ; then
     echo No valid kerberos token, deployment will not work
-    if [ $DEPLOY == 1 ]; then
+    if [ "$DEPLOY" == 1 ]; then
         exit 4
     fi
 fi
@@ -352,7 +360,7 @@ fi
 # look for xtc w/o in progress if not using live mode. TOBEIMPLEMENTED
 ###########
 RUNSTR=$(printf '%04d' "$RUN")
-RUNSTR=$EXP-r$RUNSTR*.xtc2
+RUNSTR="$EXP-r$RUNSTR*.xtc2"
 XTCDIR=/sdf/data/lcls/ds/"$HUTCH"/"$EXP"/xtc
 
 ###########
@@ -418,7 +426,7 @@ echo Check for data files:
 MINWAIT=0
 HAVEFILES=0
 while [[ $MINWAIT -lt 5 ]]; do
-    NFILES=$(ls -ltr "$XTCDIR"/*r"$RUNSTR"*s*xtc* | wc -l)
+    NFILES=$(find "$XTCDIR" -maxdepth 1 -name "*r${RUNSTR}*s*xtc*" -printf '.' | wc -c)
     echo "$NFILES"
     if [ "$NFILES" -eq 0 ]; then
 	echo 'Files are not present yet, wait a minute'
@@ -438,8 +446,7 @@ ls -ltr "$XTCDIR"/*r"$RUNSTR"*s*xtc*
 
 echo Check detectors:
 
-detnames -r exp="${EXP}",run="${RUN}",dir="${XTCDIR}" > /tmp/detnames_"$EXP"_"$CREATE_TIME"
-if [[ $? != 0 ]]; then
+if ! detnames -r exp="${EXP}",run="${RUN}",dir="${XTCDIR}" > /tmp/detnames_"$EXP"_"$CREATE_TIME"; then
     echo 'detnames failed'
     exit 8
 fi
@@ -471,14 +478,14 @@ if [[ $HAVE_EPIX100 -ge 1 ]]; then
         if [[ -v NRECS1 ]]; then
             LOCARG=$LOCARG' --nrecs1 '$NRECS1
         fi
-	DETTYPE=$(grep $MYDET /tmp/detnames_"$EXP"_"$CREATE_TIME" | grep raw | awk  'BEGIN { FS = "|"}; {print $2}' | paste -d " " -s)
+	DETTYPE=$(grep "$MYDET" /tmp/detnames_"$EXP"_"$CREATE_TIME" | grep raw | awk  'BEGIN { FS = "|"}; {print $2}' | paste -d " " -s)
         if [[ ! $DETTYPE =~ 'epix100' ]]; then
-	    echo '$MYDET is a $DETTYPE, looking for epix100'
+	    echo "$MYDET is a $DETTYPE, looking for epix100"
 	    continue
 	fi
         if [[ -v DATINFO ]]; then
 	    echo "get information in run for ${MYDET}"
-            datinfo -d $MYDET -k exp=$EXP,run=$RUN,dir=$XTCDIR -L CRITICAL -t DRS
+            datinfo -d "$MYDET" -k exp="$EXP",run="$RUN",dir="$XTCDIR" -L CRITICAL -t DRS
 	fi
 	echo "now calibrate $MYDET"
         CMD="det_dark_proc -d $MYDET -k exp=$EXP,run=$RUN,dir=$XTCDIR -L INFO $LOCARG"
@@ -504,14 +511,14 @@ if [[ $HAVE_EPIXM -ge 1 ]]; then
         if [[ -v NUMEVT ]]; then
             LOCARG=$LOCARG' -n '$NUMEVT
 	fi
-	DETTYPE=$(grep $MYDET /tmp/detnames_"$EXP"_"$CREATE_TIME" | grep raw | awk  'BEGIN { FS = "|"}; {print $2}' | paste -d " " -s)
+	DETTYPE=$(grep "$MYDET" /tmp/detnames_"$EXP"_"$CREATE_TIME" | grep raw | awk  'BEGIN { FS = "|"}; {print $2}' | paste -d " " -s)
         if [[ ! $DETTYPE =~ 'epixm' ]]; then
-	    echo '$MYDET is a $DETTYPE, looking for epixm'
+	    echo "$MYDET is a $DETTYPE, looking for epixm"
 	    continue
 	fi
         if [[ -v DATINFO ]]; then
             echo "get information in run for $MYDET"
-            datinfo -d $MYDET -k exp=$EXP,run=$RUN,dir=$XTCDIR -L CRITICAL -t DRS
+            datinfo -d "$MYDET" -k exp="$EXP",run="$RUN",dir="$XTCDIR" -L CRITICAL -t DRS
 	fi
         echo "now calibrate $MYDET"
         CMD="epixm320_dark_proc -d $MYDET -k exp=$EXP,run=$RUN,dir=$XTCDIR -L INFO $LOCARG"
@@ -528,12 +535,15 @@ if [[ $HAVE_ARCHON -ge 1 ]]; then
     DETNAMES=$(grep archon /tmp/detnames_"$EXP"_"$CREATE_TIME" | grep raw | awk  'BEGIN { FS = "|"}; {print $1}' | paste -d " " -s)
     DETTYPES=$(grep archon /tmp/detnames_"$EXP"_"$CREATE_TIME" | grep raw | awk  'BEGIN { FS = "|"}; {print $2}' | paste -d " " -s)
     for i in "${!DETNAMES[@]}"; do
-	LOCARG=$ARG' -o '$CALIBDIR
+	DARK_ARGS=(-o "$CALIBDIR")
+        if [[ $DEPLOY == 1 ]]; then
+            DARK_ARGS+=(-D)
+        fi
         if [[ -v VALSTR ]]; then
-            LOCARG=$LOCARG' -t '$VALSTR
+            DARK_ARGS+=(-t "$VALSTR")
         fi
         if [[ -v NRECS1 ]]; then
-            LOCARG=$LOCARG' --nrecs1 '$NRECS1
+            DARK_ARGS+=(--nrecs1 "$NRECS1")
         fi
 
         MYDET="${DETNAMES[i]// /}"
@@ -541,9 +551,10 @@ if [[ $HAVE_ARCHON -ge 1 ]]; then
         if [ "$MYDETTYPE" = 'archon' ]; then
             echo "now calibrate ${MYDET}"
             KARG="{'exp':'$EXP','run':$RUN,'detectors':['$MYDET'],'dir':'$XTCDIR'}"
-            CMD="det_dark_proc -d $MYDET -k $KARG -L INFO $LOCARG"
-            echo "$CMD"
-            $CMD
+            DARK_CMD=(det_dark_proc -d "$MYDET" -k "$KARG" -L INFO "${DARK_ARGS[@]}")
+            printf '%q ' "${DARK_CMD[@]}"
+            printf '\n'
+            "${DARK_CMD[@]}"
         fi
     done
 fi
@@ -553,12 +564,15 @@ if [[ $HAVE_AXIS_SVLS -ge 1 ]]; then
     DETNAMES=$(grep axis_svls /tmp/detnames_"$EXP"_"$CREATE_TIME" | grep raw | awk  'BEGIN { FS = "|"}; {print $1}' | paste -d " " -s)
     DETTYPES=$(grep axis_svls /tmp/detnames_"$EXP"_"$CREATE_TIME" | grep raw | awk  'BEGIN { FS = "|"}; {print $2}' | paste -d " " -s)
     for i in "${!DETNAMES[@]}"; do
-	LOCARG=$ARG' -o '$CALIBDIR
+	DARK_ARGS=(-o "$CALIBDIR")
+        if [[ $DEPLOY == 1 ]]; then
+            DARK_ARGS+=(-D)
+        fi
         if [[ -v VALSTR ]]; then
-            LOCARG=$LOCARG' -t '$VALSTR
+            DARK_ARGS+=(-t "$VALSTR")
         fi
         if [[ -v NRECS1 ]]; then
-            LOCARG=$LOCARG' --nrecs1 '$NRECS1
+            DARK_ARGS+=(--nrecs1 "$NRECS1")
         fi
 
         MYDET="${DETNAMES[i]// /}"
@@ -566,9 +580,10 @@ if [[ $HAVE_AXIS_SVLS -ge 1 ]]; then
         if [ "$MYDETTYPE" = 'axis' ]; then
             echo "now calibrate ${MYDET}"
             KARG="{'exp':'$EXP','run':$RUN,'detectors':['$MYDET'],'dir':'$XTCDIR'}"
-            CMD="det_dark_proc -d $MYDET -k $KARG -L INFO $LOCARG"
-            echo "$CMD"
-            $CMD
+            DARK_CMD=(det_dark_proc -d "$MYDET" -k "$KARG" -L INFO "${DARK_ARGS[@]}")
+            printf '%q ' "${DARK_CMD[@]}"
+            printf '\n'
+            "${DARK_CMD[@]}"
         fi
     done
 fi
@@ -582,16 +597,16 @@ if [[ $HAVE_EPIX10K -ge 1 ]]; then
     for MYDET in ${DETNAMES}; do
         LOCARG=' -o '$CALIBDIR
         #MYDET="${DETNAMES[i]// /}"
-	DETTYPE=$(grep $MYDET /tmp/detnames_"$EXP"_"$CREATE_TIME" | grep raw | awk  'BEGIN { FS = "|"}; {print $2}' | paste -d " " -s)
+	DETTYPE=$(grep "$MYDET" /tmp/detnames_"$EXP"_"$CREATE_TIME" | grep raw | awk  'BEGIN { FS = "|"}; {print $2}' | paste -d " " -s)
 	#MYDETTYPE="${DETTYPES[i]// /}"
-        if [ ! "$DETTYPE" =~ 'epix10ka' ]; then
+        if [[ ! $DETTYPE =~ 'epix10ka' ]]; then
 	    continue
 	fi
         echo "Epix10ka name for ${EXP} is: ${MYDET}"
 
         if [[ -v DATINFO ]]; then
 	    echo "get information in run for ${MYDET}"
-            datinfo -d $MYDET -k exp=$EXP,run=$RUN,dir=$XTCDIR -L CRITICAL -t DRS
+            datinfo -d "$MYDET" -k exp="$EXP",run="$RUN",dir="$XTCDIR" -L CRITICAL -t DRS
 	fi
 	NSEG=1
         if [[ $MYDET =~ "2M" ]]; then
@@ -702,14 +717,14 @@ if [[ $HAVE_JUNGFRAU -ge 1 ]]; then
     DETNAMES=$(grep jungfrau /tmp/detnames_"$EXP"_"$CREATE_TIME" | grep raw | awk  'BEGIN { FS = "|"}; {print $1}' | paste -d " " -s)
     for MYDET in ${DETNAMES}; do
         LOCARG=' -o '$CALIBDIR
-	DETTYPE=$(grep $MYDET /tmp/detnames_"$EXP"_"$CREATE_TIME" | grep raw | awk  'BEGIN { FS = "|"}; {print $2}' | paste -d " " -s)
+	DETTYPE=$(grep "$MYDET" /tmp/detnames_"$EXP"_"$CREATE_TIME" | grep raw | awk  'BEGIN { FS = "|"}; {print $2}' | paste -d " " -s)
         if [[ ! $DETTYPE =~ 'jungfrau' ]]; then
 	    continue
 	fi
         echo "Jungfrau name for ${EXP} is: ${MYDET}"
         if [[ -v DATINFO ]]; then
 	    echo "get information in run for ${MYDET}"
-            datinfo -d $MYDET -k exp=$EXP,run=$RUN,dir=$XTCDIR -L CRITICAL -t DRS
+            datinfo -d "$MYDET" -k exp="$EXP",run="$RUN",dir="$XTCDIR" -L CRITICAL -t DRS
 	fi
 	NSEG=1
         if [[ $MYDET =~ "16M" ]]; then
