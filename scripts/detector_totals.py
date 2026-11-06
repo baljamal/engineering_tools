@@ -83,7 +83,6 @@ def getExperiments(run_period, after, before):
         return (exp.get("first_run", {}).get("begin_time", None)
                 and dateparser.parse(exp["first_run"]["begin_time"]).astimezone(tz) > before)
 
-    sef = None
     if after and before:
         def sef(x):
             return (last_run_exists(x)
@@ -98,6 +97,8 @@ def getExperiments(run_period, after, before):
         def sef(x):
             return (first_run_exists(x)
                     and not first_run_after_specified_before(x))
+    else:
+        sef = None
 
     if sef:
         expsset = set(exps)
@@ -156,11 +157,11 @@ if __name__ == '__main__':
         logger.debug("Getting DAQ detector counts for %s", experiment)
         try:
             daq_counts[experiment] = getDAQDetectorTotals(experiment)
-        except:
+        except Exception:
             logger.exception("Exception getting  DAQ detector counts"
                              " for %s. Note; this may be expected "
-                             "( for example, restricted experiments ) ", 
-                            experiment)
+                             "( for example, restricted experiments ) ",
+                             experiment)
 
     det_counts = OrderedDict()
     for experiment, detectors in daq_counts.items():

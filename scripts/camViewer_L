@@ -40,7 +40,7 @@ do
             shift
             ;;
         -c|--cam)
-            POSITIONAL+=("--cam $2")
+            POSITIONAL+=("--cam" "$2")
             shift 2
             ;;
         -m|--main)
@@ -96,19 +96,21 @@ set -- "${POSITIONAL[@]}"
 
 
 current_host="$(hostname)"
-if [[ "$current_host" != "lfe-console" && 
-	    "$current_host" != "xbdo-control" && 
-	    -z "$IS_REMOTE_SSH" && 
+if [[ "$current_host" != "lfe-console" &&
+	    "$current_host" != "xbdo-control" &&
+	    -z "$IS_REMOTE_SSH" &&
             "$NEED_SSH" -eq 1 ]]; then
 
     echo "Not in SSH, connecting to lfe-console..." >&2
-    ssh -t lfe-console "IS_REMOTE_SSH=1 $DIR/camViewer $* ; bash "
+    printf -v remote_command '%q ' "$DIR/camViewer" "$@"
+    # Expand locally after quoting every argument for the remote shell.
+    # shellcheck disable=SC2029
+    ssh -t lfe-console "IS_REMOTE_SSH=1 $remote_command; bash "
     #ssh -t lfe-console "IS_REMOTE_SSH=1 nohup $DIR/camViewer $@ 1>&2 | tee nohup.out &"
     #ssh -t lfe-console "IS_REMOTE_SSH=1 nohup $DIR/camViewer $@ "
     exit_status=$?
     echo "SSH exit status: $exit_status" >&2
     exit $exit_status
 else
-    "$DIR"/camViewer -H lfe $*
+    "$DIR"/camViewer -H lfe "$@"
 fi
-

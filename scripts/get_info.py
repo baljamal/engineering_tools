@@ -1,9 +1,9 @@
 import argparse
+import getpass
 import logging
 import os
 import socket
 import sys
-import getpass
 
 import requests
 
@@ -216,8 +216,7 @@ if args.daq:
                             {"instrument_name": hutch, "station": station})
         exp = resp.json().get("value", {}).get("name")
 
-    r = requests.get(ws_url + "/lgbk/" + exp + "/ws"
-                                 + "/file_counts_by_extension")
+    r = requests.get(ws_url + "/lgbk/" + exp + "/ws/file_counts_by_extension")
     r.raise_for_status()
     if "xtc2" in r.json()["value"]:
         print('LCLS2')
