@@ -96,9 +96,9 @@ set -- "${POSITIONAL[@]}"
 
 
 current_host="$(hostname)"
-if [[ "$current_host" != "lfe-console" && 
-	    "$current_host" != "xbdo-control" && 
-	    -z "$IS_REMOTE_SSH" && 
+if [[ "$current_host" != "lfe-console" &&
+	    "$current_host" != "xbdo-control" &&
+	    -z "$IS_REMOTE_SSH" &&
             "$NEED_SSH" -eq 1 ]]; then
 
     echo "Not in SSH, connecting to lfe-console..." >&2
@@ -111,4 +111,3 @@ if [[ "$current_host" != "lfe-console" &&
 else
     "$DIR"/camViewer -H lfe $*
 fi
-

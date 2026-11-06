@@ -159,7 +159,7 @@ if __name__ == '__main__':
         except:
             logger.exception("Exception getting  DAQ detector counts"
                              " for %s. Note; this may be expected "
-                             "( for example, restricted experiments ) ", 
+                             "( for example, restricted experiments ) ",
                             experiment)
 
     det_counts = OrderedDict()

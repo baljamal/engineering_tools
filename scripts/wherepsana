@@ -72,7 +72,7 @@ if [[ -z $CONFIG ]]; then
         elif [[ -z $CONFIG ]]; then
             echo 'You must provide cxi config file (-c) if not on daq machine'
             exit 1
-        fi 
+        fi
     fi
 
     CONFIG=$HUTCH$CNFEXT
@@ -87,8 +87,8 @@ AMI1_NODES=(`grep monreqsrvami1_ /tmp/procServStatus.$$ | awk {'print $1'}`)
 
 if [[ -z $DETAIL ]]; then
     NODESTR=''
-    for ((idx=0; idx<${#PSANA_NODES[@]}; ++idx)); do 
-        NODESTR=$NODESTR${PSANA_NODES[idx]}','; 
+    for ((idx=0; idx<${#PSANA_NODES[@]}; ++idx)); do
+        NODESTR=$NODESTR${PSANA_NODES[idx]}',';
     done
     echo ${NODESTR::-1}
 else
@@ -97,12 +97,12 @@ else
     EVENT_MASKS=(`grep event /tmp/procServStatus.$$ | awk -F "-s " '{print $2;}' | awk '{print lshift(1,$1);}'`)
     echo 'psana runs on the following nodes looking at event nodes '${#EVENT[@]}
     NODESTR=''
-    for ((idx=0; idx<${#PSANA_NODES[@]}; ++idx)); do 
+    for ((idx=0; idx<${#PSANA_NODES[@]}; ++idx)); do
         echo -n ${PSANA_NODES[idx]}':'
 	MASKS=${PSANA_MASKS[idx]}
-	for ((m=0; m<${#EVENT[@]}; ++m)); do 
+	for ((m=0; m<${#EVENT[@]}; ++m)); do
 	    if [ $((${MASKS}&${EVENT_MASKS[m]})) != 0 ]; then
-	        echo -n ' '${EVENT[m]} 
+	        echo -n ' '${EVENT[m]}
 		MASKS=$((${MASKS}&~${EVENT_MASKS[m]}))
 	    fi
         done

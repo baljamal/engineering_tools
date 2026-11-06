@@ -53,7 +53,7 @@ OPTIONS:
                 events for the first stage of processing
         --datinfo
                 print info about run for detectors
- 
+
 EOF
 }
 
@@ -478,7 +478,7 @@ if [[ $HAVE_EPIX100 -ge 1 ]]; then
 	fi
         if [[ -v DATINFO ]]; then
 	    echo "get information in run for ${MYDET}"
-            datinfo -d $MYDET -k exp=$EXP,run=$RUN,dir=$XTCDIR -L CRITICAL -t DRS 
+            datinfo -d $MYDET -k exp=$EXP,run=$RUN,dir=$XTCDIR -L CRITICAL -t DRS
 	fi
 	echo "now calibrate $MYDET"
         CMD="det_dark_proc -d $MYDET -k exp=$EXP,run=$RUN,dir=$XTCDIR -L INFO $LOCARG"
@@ -709,7 +709,7 @@ if [[ $HAVE_JUNGFRAU -ge 1 ]]; then
         echo "Jungfrau name for ${EXP} is: ${MYDET}"
         if [[ -v DATINFO ]]; then
 	    echo "get information in run for ${MYDET}"
-            datinfo -d $MYDET -k exp=$EXP,run=$RUN,dir=$XTCDIR -L CRITICAL -t DRS 
+            datinfo -d $MYDET -k exp=$EXP,run=$RUN,dir=$XTCDIR -L CRITICAL -t DRS
 	fi
 	NSEG=1
         if [[ $MYDET =~ "16M" ]]; then
@@ -834,5 +834,3 @@ T2="$(($(date +%s%N)-T))"
 S="$((T2/1000000000))"
 M="$((T2/1000000))"
 echo "xxxxxxxxxxxxxxxxx END MAKEPEDS at $(date +'%T') after  $S.$M XXXXXXXXXXXXXXXXXXXXXXX"
-
-

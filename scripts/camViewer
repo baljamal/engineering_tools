@@ -380,7 +380,7 @@ if [ $NUDGE -gt 0 ]; then
     exit
 fi
 
-# we do not have write permissions for the XTCAV camera _and_ 
+# we do not have write permissions for the XTCAV camera _and_
 # the Acquire_RBV is 0 even when the camera is runnig
 if [[ "$CAMNAME" != 'XTCAV' &&
    -z "$IS_REMOTE_SSH" ]]; then
@@ -415,4 +415,3 @@ fi
 
 echo "$EXE" --camerapv "$CAMPVFULL" --instrument "$hutch" --pvlist "$PVLIST"
 "$EXE" --camerapv "$CAMPVFULL" --instrument  "$hutch" --pvlist "$PVLIST"
-

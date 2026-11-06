@@ -13,23 +13,23 @@ usage: $0 options
 Make a pedestal file for offline use
 
 OPTIONS:
-        -r|--run         
+        -r|--run
                runnumber for pedestal
-        -e|--experiment <expname> 
+        -e|--experiment <expname>
                in case you do not want pedestals for the ongoing experiment
         -q|--queue <queue>
                queue for batch submisson
-        -O|--opal         
+        -O|--opal
                make pedestals for Opals (default only cspad/EPIX detectors)
-        -Z|--zyla         
+        -Z|--zyla
                make pedestals for Zyla (default only cspad/EPIX detectors)
         -R|--Rayonix
                make pedestals for Rayonix (please note that this is not the correct procedure for this detector)
         -U|--uxi
                make pedestals for Uxi detectors
-        -j|--jungfrau3     
+        -j|--jungfrau3
                make pedestals for Jungfrau - 3 run version(default only cspad/EPIX detectors)
-        -A|--alvium         
+        -A|--alvium
                make pedestals for Alvium (default only cspad/EPIX detectors)
         --reservation <reservation>
                reservation for batch submisson
@@ -39,19 +39,19 @@ OPTIONS:
                lasing off run for XTCAV
         -v|--validity_start <val_run>
                validity range (set to <val_run>-end)
-        -N|--nevents <#>  
+        -N|--nevents <#>
                 use this number of events (default 1000). Needed when using -c as original events are counted
-        -c|--eventcode <evtcode x> 
+        -c|--eventcode <evtcode x>
                 use events with eventcode <x> set
-        -n|--noise_max <#> 
+        -n|--noise_max <#>
                 if you have created a noise file, then write pixel mask file for pixels with noise above #sigmas
-        -C|--noise_min <#> 
+        -C|--noise_min <#>
                 if noise filecreated, write pixel mask file for pixels with noise below xxx (currently integer only)
-        -m|--adu_min <#> 
+        -m|--adu_min <#>
                 write pixel mask file for pixels with pedestal below xxx (currently integer only)
-        -x|--adu_max <#>  
+        -x|--adu_max <#>
                 write pixel mask file for pixels with pedestal above xxx )currently integer only)
-        -i|--interactive 
+        -i|--interactive
                 start calibman. -r 0: show all darks, -r n: show runs (n-25) - 25
         -d|--calibdir
                 give path for alternative calibdir
@@ -201,7 +201,7 @@ xtcav_lasOff()
    exit 0
 }
 
-# Arg: DETECTOR class.  This could be a comma-separated list, but we're 
+# Arg: DETECTOR class.  This could be a comma-separated list, but we're
 # matching it in the config file as a string.
 get_config()
 {
@@ -454,7 +454,7 @@ fi
 SIT_ENV_DIR=$SIT_ENV_DIR'/conda1/'
 source $SIT_ENV_DIR/manage/bin/psconda.sh
 
-#if you don't pass the queue, it'll run interactively 
+#if you don't pass the queue, it'll run interactively
 if [ -v QUEUE ]; then
     USER=$(whoami)
     SBATCH_ARGS="-p $QUEUE --account lcls:$EXP"
@@ -526,7 +526,7 @@ fi
 if [ ! -w "$WORKDIR" ]; then
     echo 'Typical directory to store calib logfiles & results is not writeable, will attempt to work from /tmp, but things may fail'
     WORKDIR='/tmp'
-fi 
+fi
 cd "$WORKDIR" || exit
 
 ######################
@@ -586,7 +586,7 @@ while [[ $MINWAIT -lt 5 ]]; do
 	echo 'Files are not present yet, wait a minute'
 	sleep 60
 	MINWAIT=$((MINWAIT+1))
-    else 
+    else
 	HAVEFILES=1
 	MINWAIT=6
     fi
@@ -595,10 +595,10 @@ if [[ $HAVEFILES == 0 ]]; then
    echo 'After 5 minutes, files were not present: quit! '
    exit 3
 fi
-	
+
 ls -ltr "$XTCDIR"/*r"$RUNSTR"*s*xtc*
 
-echo Check detectors: 
+echo Check detectors:
 
 detnames exp="${EXP}":run="${RUN}":dir="${XTCDIR}":stream=0-79 > /tmp/detnames_"$EXP"_"$CREATE_TIME"
 #running local
@@ -613,9 +613,9 @@ echo "-----------------------"
 #check if jungfrau detectors are present
 HAVE_JUNGFRAU=$(grep -c Jungfrau /tmp/detnames_"$EXP"_"$CREATE_TIME")
 if [[ ( $HAVE_JUNGFRAU -ge 1 ) && ( $WANT_ZYLA -eq 0 ) && ( $WANT_OPAL -eq 0 ) && ( $WANT_RAYONIX -eq 0 )  && ( $WANT_UXI -eq 0 ) && ( $WANT_ALVIUM -eq 0 ) ]]; then
-    
+
     DETNAMES=$(grep Jungfrau /tmp/detnames_"$EXP"_"$CREATE_TIME" | awk  'BEGIN { FS = "|"}; {print $1}' | paste -d " " -s)
-    
+
     DSNAME='exp='$EXP':run='$RUN':smd:stream=0-79'
     if [ -v OLD_JUNGFRAU ]; then # Do we need to keep the old JF stuff?
         #get the dataset name
@@ -646,15 +646,15 @@ if [[ ( $HAVE_JUNGFRAU -ge 1 ) && ( $WANT_ZYLA -eq 0 ) && ( $WANT_OPAL -eq 0 ) &
         JOBIDS=()
         NJOBS=0
     fi
- 
+
     for JUNGFRAU in ${DETNAMES}; do
 	ALIAS=$(grep $JUNGFRAU /tmp/detnames_"$EXP"_"$CREATE_TIME" | grep raw | awk  'BEGIN { FS = "|"}; {print $2}' | paste -d " " -s)
         echo "jungfrau loop $JUNGFRAU with alias $ALIAS -- $RUNLOCAL"
         NSEG=99
         if [[ $ALIAS =~ "5" ]]; then
-	    NSEG=1; 
+	    NSEG=1;
         elif [[ $ALIAS =~ "1M" ]]; then
-	    NSEG=2; 
+	    NSEG=2;
 	elif [[ $ALIAS =~ "4M" ]]; then
 	    NSEG=8;
 	fi
@@ -681,7 +681,7 @@ if [[ ( $HAVE_JUNGFRAU -ge 1 ) && ( $WANT_ZYLA -eq 0 ) && ( $WANT_OPAL -eq 0 ) &
                     printf 'echo $HOSTNAME\n' >> "$tmpScript"
                     printf '%s\n' "${CMDC}" >> "$tmpScript"
                     jfCmd="sbatch ${SBATCH_ARGS} --mem 8GB --cpus-per-task 1 -o $WORKDIR/jungfrau_${EXP}_RUN${RUN}_%J.out $tmpScript"
-                    echo "run in queue: $jfCmd"        
+                    echo "run in queue: $jfCmd"
                     SUBMISSION=$($jfCmd)
                     #check_for_submit_error
                     echo "$SUBMISSION"
@@ -735,7 +735,7 @@ if [[ ( $HAVE_JUNGFRAU -ge 1 ) && ( $WANT_ZYLA -eq 0 ) && ( $WANT_OPAL -eq 0 ) &
             #this is also where -t should be used, just as for the validity range
             CMD="jungfrau_deploy_constants -D -d $JUNGFRAU -e $EXP -r $RUN -x :dir=$XTCDIR"
             if [ "$VALSTR" != 'xxx' ]; then
-                # this does not work before ana-.....    
+                # this does not work before ana-.....
                 #CMD=$CMD' -t '$VALSTR'-end'
                 CMD=$CMD' -t '$VALSTR
             fi
@@ -765,15 +765,15 @@ if [[ ( $HAVE_EPIX10K -ge 1 ) && ( $WANT_ZYLA -eq 0 ) && ( $WANT_OPAL -eq 0 ) &&
         JOBIDS=()
         NJOBS=0
     fi
-    
+
     for EPIX10K in ${DETNAMES}; do
 	ALIAS=$(grep $EPIX10K /tmp/detnames_"$EXP"_"$CREATE_TIME" | grep raw | awk  'BEGIN { FS = "|"}; {print $2}' | paste -d " " -s)
         echo "Epix10ka name for $EXP is: ${EPIX10K} with alias ${ALIAS}"
         NSEG=99
         if [[ $ALIAS =~ "2M" ]]; then
-	    NSEG=16; 
+	    NSEG=16;
         elif [[ $ALIAS =~ "uad" ]]; then
-	    NSEG=4; 
+	    NSEG=4;
 	fi
         ##run all at once - do not use
         #Do not use workdir as you'd need to run the full charge injection run there for this to work
@@ -805,7 +805,7 @@ if [[ ( $HAVE_EPIX10K -ge 1 ) && ( $WANT_ZYLA -eq 0 ) && ( $WANT_OPAL -eq 0 ) &&
 			break
 	            fi
 		done
-            else            
+            else
                 echo "$CMD"
                 $CMD
             fi
@@ -850,7 +850,7 @@ if [[ ( $HAVE_EPIX10K -ge 1 ) && ( $WANT_ZYLA -eq 0 ) && ( $WANT_OPAL -eq 0 ) &&
             echo 'Print Information about batch jobs'
             JOBIDSTR=''
             for JOBID in "${ALLJOBIDS[@]}"; do
-                if [[ $JOBIDSTR != '' ]]; then 
+                if [[ $JOBIDSTR != '' ]]; then
                     JOBIDSTR=$JOBIDSTR','
                 fi
                 JOBIDSTR=$JOBIDSTR$JOBID
@@ -870,7 +870,7 @@ fi
 # Make list of detectors to treat with calibrun
 ###########
 
-#check if detectors are present    
+#check if detectors are present
 HAVE_EPIX=$(grep -c Epix100 /tmp/detnames_"$EXP"_"$CREATE_TIME")
 HAVE_CSPAD=$(grep -c Cspad /tmp/detnames_"$EXP"_"$CREATE_TIME")
 HAVE_ZYLA=$(grep -c Zyla /tmp/detnames_"$EXP"_"$CREATE_TIME")
@@ -952,10 +952,10 @@ if [[ ( $HAVE_RAYONIX -ge 1 ) && ( $WANT_RAYONIX -ge 1 ) ]]; then
     if [ $SPECIFIED_CUTS -eq -4 ]; then
         DETS="$DETS Rayonix"
     else
-        DETS='Rayonix'    
+        DETS='Rayonix'
     fi
     ARG=$ARG' --zeropeds'
-    
+
     DETNAMES=$(grep Rayonix /tmp/detnames_"$EXP"_"$CREATE_TIME" | awk  'BEGIN { FS = "|"}; {print $1}' | paste -d " " -s)
     for RAYONIX in $DETNAMES; do
         deploy_geometry "$RAYONIX"
